@@ -21,6 +21,10 @@ function commentTone(userId: string) {
 
 async function request<T>(path: string, options: RequestInit = {}) {
   const response = await fetch(`${API}${path}`, { ...options, credentials: "include", headers: { "content-type": "application/json", ...options.headers } });
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new Error("The API URL is not configured correctly. Set BUN_PUBLIC_API_URL to the Railway backend URL and redeploy Netlify.");
+  }
   const data = await response.json() as T & { error?: string };
   if (!response.ok) throw new Error(data.error ?? "Request failed");
   return data;
