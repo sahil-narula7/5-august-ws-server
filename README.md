@@ -1,5 +1,3 @@
-# Turborepo starter
-
 # Collaborative Workspace
 
 A Trello-style collaborative workspace built with React, Bun, SQLite, and Turborepo. Users can create organizations and boards, manage sections and issues, comment in real time through polling, assign work, invite members, and grant board-specific access.
