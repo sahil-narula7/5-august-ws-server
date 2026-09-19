@@ -111,7 +111,6 @@ export function App() {
 
   useEffect(() => {
     request<{ user: User }>("/me").then(async data => {
-      if (inviteToken) await acceptInvitationToken(inviteToken);
       setUser(data.user);
       await Promise.all([loadWorkspace(), loadUsers(), loadNotifications()]);
     }).catch(cause => {
