@@ -23,7 +23,9 @@ function cookieValue(request: Request, name: string) {
   return request.headers.get("cookie")?.split(";").map(value => value.trim()).find(value => value.startsWith(`${name}=`))?.slice(name.length + 1);
 }
 function currentUser(request: Request): User | null {
-  const token = cookieValue(request, "session");
+  const authorization = request.headers.get("authorization") ?? "";
+  const bearerToken = authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
+  const token = bearerToken || cookieValue(request, "session");
   if (!token) return null;
   return db.query("SELECT users.id, users.email FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.token = ? AND sessions.expires_at > datetime('now')").get(token) as User | null;
 }
@@ -109,7 +111,7 @@ function signinUser(user: User) {
   const token = randomUUID();
   const expires = new Date(Date.now() + sessionDays * 86400000);
   db.query("INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)").run(token, user.id, expires.toISOString());
-  return json({ user }, 200, { "set-cookie": sessionCookie(token, expires) });
+  return json({ user, token }, 200, { "set-cookie": sessionCookie(token, expires) });
 }
 async function createOrganization(request: Request, user: User) {
   const data = await body(request);

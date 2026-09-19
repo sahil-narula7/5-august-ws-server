@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 
 const API = process.env.BUN_PUBLIC_API_URL?.trim() || "/api";
 const INVITE_STORAGE_KEY = "workspace-invite-token";
+const AUTH_STORAGE_KEY = "workspace-session-token";
 
 type User = { id: string; email: string };
 type Organization = { id: string; name: string; role: "admin" | "member" };
@@ -20,7 +21,8 @@ function commentTone(userId: string) {
 }
 
 async function request<T>(path: string, options: RequestInit = {}) {
-  const response = await fetch(`${API}${path}`, { ...options, credentials: "include", headers: { "content-type": "application/json", ...options.headers } });
+  const token = window.localStorage.getItem(AUTH_STORAGE_KEY);
+  const response = await fetch(`${API}${path}`, { ...options, credentials: "include", headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}), ...options.headers } });
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
     throw new Error("The API URL is not configured correctly. Set BUN_PUBLIC_API_URL to the Railway backend URL and redeploy Netlify.");
@@ -153,10 +155,11 @@ export function App() {
     clearMessages();
     const form = new FormData(event.currentTarget);
     try {
-      const data = await request<{ user: User }>(form.get("mode") === "signup" ? "/signup" : "/signin", {
+      const data = await request<{ user: User; token: string }>(form.get("mode") === "signup" ? "/signup" : "/signin", {
         method: "POST",
         body: JSON.stringify({ email: form.get("email"), password: form.get("password") }),
       });
+      window.localStorage.setItem(AUTH_STORAGE_KEY, data.token);
       if (inviteToken) await acceptInvitationToken(inviteToken);
       setUser(data.user);
       await loadWorkspace();
@@ -367,6 +370,7 @@ export function App() {
   async function logout() {
     try {
       await request("/logout", { method: "POST" });
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
       setUser(null);
       setOrganizations([]);
       setBoards([]);
