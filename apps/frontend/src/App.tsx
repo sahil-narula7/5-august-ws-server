@@ -111,7 +111,9 @@ export function App() {
       if (inviteToken) await acceptInvitationToken(inviteToken);
       setUser(data.user);
       await Promise.all([loadWorkspace(), loadUsers(), loadNotifications()]);
-    }).catch(showError);
+    }).catch(cause => {
+      if (!(cause instanceof Error && cause.message === "Authentication required")) showError(cause);
+    });
   }, []);
 
   useEffect(() => {
