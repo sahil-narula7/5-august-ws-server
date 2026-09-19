@@ -84,7 +84,7 @@ Add this environment variable in Netlify:
 BUN_PUBLIC_API_URL=https://your-deployed-backend.example.com
 ```
 
-Deploy the backend first to a Bun-capable host such as Railway, Render, Fly.io, or a VPS. For a Railway deployment, use `apps/backend` as the service root, `bun install` as the install command, and `bun index.ts` as the start command. Attach a persistent volume for SQLite and set `DATABASE_PATH` to its mounted path, such as `/data/app.sqlite`.
+Deploy the backend first to a Bun-capable host such as Railway, Render, Fly.io, or a VPS. For a Railway deployment, use `apps/backend` as the service root, `bun install` as the install command, and `bun index.ts` as the start command. Set the healthcheck path to `/health`. Attach a persistent volume for SQLite and set `DATABASE_PATH` to its mounted path, such as `/data/app.sqlite`.
 
 Set these backend production variables:
 

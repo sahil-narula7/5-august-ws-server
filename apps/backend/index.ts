@@ -168,6 +168,7 @@ const server = Bun.serve({
     try {
       if (request.method === "POST" && url.pathname === "/signup") return signup(request);
       if (request.method === "POST" && url.pathname === "/signin") return signin(request);
+      if (request.method === "GET" && url.pathname === "/health") return json({ ok: true });
       if (request.method === "GET" && url.pathname === "/me") return user ? json({ user }) : error("Authentication required", 401);
       if (request.method === "GET" && url.pathname === "/notifications") return json(db.query("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC").all(user?.id ?? ""));
       if (request.method === "POST" && url.pathname === "/logout") {
