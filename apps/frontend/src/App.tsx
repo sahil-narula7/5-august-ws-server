@@ -167,8 +167,20 @@ export function App() {
         body: JSON.stringify({ email: form.get("email"), password: form.get("password") }),
       });
       window.localStorage.setItem(AUTH_STORAGE_KEY, data.token);
-      if (inviteToken) await acceptInvitationToken(inviteToken);
       setUser(data.user);
+      if (inviteToken) {
+        try {
+          await acceptInvitationToken(inviteToken);
+        } catch (cause) {
+          if (cause instanceof Error && cause.message === "Invitation is invalid or does not belong to this account") {
+            setInviteToken("");
+            window.localStorage.removeItem(INVITE_STORAGE_KEY);
+            setNotice("Signed in. The saved invitation is no longer active.");
+          } else {
+            throw cause;
+          }
+        }
+      }
       await loadWorkspace();
     } catch (cause) {
       if (cause instanceof Error && cause.message === "email is already registered") {
@@ -382,6 +394,7 @@ export function App() {
     try {
       await request("/logout", { method: "POST" });
       window.localStorage.removeItem(AUTH_STORAGE_KEY);
+      window.localStorage.removeItem(INVITE_STORAGE_KEY);
       setUser(null);
       setOrganizations([]);
       setBoards([]);
