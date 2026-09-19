@@ -1,6 +1,14 @@
 import { Database } from "bun:sqlite";
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 
-export const db = new Database(process.env.DATABASE_PATH ?? "./app.sqlite");
+const databasePath = process.env.DATABASE_PATH ?? "./app.sqlite";
+
+if (databasePath !== ":memory:") {
+  mkdirSync(dirname(databasePath), { recursive: true });
+}
+
+export const db = new Database(databasePath);
 
 db.run("PRAGMA foreign_keys = ON");
 
