@@ -1,7 +1,7 @@
 import "./index.css";
 import { useEffect, useState, type FormEvent } from "react";
 
-const API = "/api";
+const API = process.env.BUN_PUBLIC_API_URL?.trim() || "/api";
 const INVITE_STORAGE_KEY = "workspace-invite-token";
 
 type User = { id: string; email: string };

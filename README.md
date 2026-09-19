@@ -1,141 +1,94 @@
 # Turborepo starter
 
-This Turborepo starter is maintained by the Turborepo core team.
+# Collaborative Workspace
 
-## Using this example
+A Trello-style collaborative workspace built with React, Bun, SQLite, and Turborepo. Users can create organizations and boards, manage sections and issues, comment in real time through polling, assign work, invite members, and grant board-specific access.
 
-Run the following command:
+## Features
 
-```sh
-npx create-turbo@latest
+- Session-based signup, login, and logout
+- Organizations with admin and member roles
+- Boards, sections, issue creation, deletion, and drag-and-drop movement
+- Issue assignment and discussion comments
+- Automatic dashboard refresh every 2 seconds
+- Invitation links that survive a closed tab and can be accepted safely more than once
+- Admin notifications for new accounts
+- Board-specific access grants and removals
+- Local SQLite persistence
+- Responsive desktop, tablet, and mobile UI
+
+## Project structure
+
+```text
+apps/backend/   Bun API server and SQLite schema
+apps/frontend/  React application and local frontend proxy
+packages/       Shared Turborepo TypeScript and ESLint configuration
 ```
 
-## What's inside?
+## Requirements
 
-This Turborepo includes the following packages/apps:
+- Bun 1.3+
+- Node.js 18+ for tooling compatibility
+- A browser
 
-### Apps and Packages
+## Local setup
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```bash
+git clone https://github.com/sahil-narula7/5-august-ws-server.git
+cd 5-august-ws-server
+bun install
+cp .env.example apps/backend/.env
+bun run dev
 ```
 
-Without global `turbo`, use your package manager:
+Open `http://localhost:3000`. The frontend runs on port `3000` and proxies `/api` requests to the backend on port `3001`. The backend creates `apps/backend/app.sqlite` automatically. SQLite files are ignored by Git.
 
-```sh
-cd my-turborepo
-npx turbo build
-bun dlx turbo build
-bun exec turbo build
+Create the first account from the login page. The first organization created by that account gives the account the `admin` role.
+
+### Email invitations
+
+Invitations work locally without email credentials: the app returns a shareable invitation link. For real email delivery, set these values in `apps/backend/.env`:
+
+```env
+APP_URL=http://localhost:3000
+RESEND_API_KEY=your_resend_api_key
+EMAIL_FROM=Workspace <invites@your-verified-domain.com>
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+The sender domain must be verified in Resend.
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## Commands
 
-```sh
-turbo build --filter=docs
+```bash
+bun run dev
+bun run build
+bun run check-types
+bun test apps/backend/index.test.ts
 ```
 
-Without global `turbo`:
+## Deploying the frontend to Netlify
 
-```sh
-npx turbo build --filter=docs
-bun exec turbo build --filter=docs
-bun exec turbo build --filter=docs
+This repository includes [netlify.toml](netlify.toml). In Netlify choose **Add new project > Import an existing project > GitHub**, then select:
+
+`sahil-narula7/5-august-ws-server`
+
+Netlify will read the configuration automatically. The important settings are:
+
+- Base directory: `apps/frontend`
+- Build command: `bun run build`
+- Publish directory: `dist` (relative to the base directory)
+
+Add this environment variable in Netlify:
+
+```env
+BUN_PUBLIC_API_URL=https://your-deployed-backend.example.com
 ```
 
-### Develop
+The backend is a Bun server and cannot run as the frontend's static Netlify publish output. Deploy `apps/backend` to a Bun-capable host such as Railway, Render, Fly.io, or a VPS, then put that public backend URL in `BUN_PUBLIC_API_URL`. Configure the backend `FRONTEND_ORIGIN` with the Netlify site URL and set `APP_URL` to the Netlify site URL for invitation links.
 
-To develop all apps and packages, run the following command:
+## GitHub
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-bun exec turbo dev
-bun exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-bun exec turbo dev --filter=web
-bun exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-bun exec turbo login
-bun exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
+Repository: https://github.com/sahil-narula7/5-august-ws-server
 turbo link
 ```
 
