@@ -84,7 +84,20 @@ Add this environment variable in Netlify:
 BUN_PUBLIC_API_URL=https://your-deployed-backend.example.com
 ```
 
-The backend is a Bun server and cannot run as the frontend's static Netlify publish output. Deploy `apps/backend` to a Bun-capable host such as Railway, Render, Fly.io, or a VPS, then put that public backend URL in `BUN_PUBLIC_API_URL`. Configure the backend `FRONTEND_ORIGIN` with the Netlify site URL and set `APP_URL` to the Netlify site URL for invitation links.
+Deploy the backend first to a Bun-capable host such as Railway, Render, Fly.io, or a VPS. For a Railway deployment, use `apps/backend` as the service root, `bun install` as the install command, and `bun index.ts` as the start command. Attach a persistent volume for SQLite and set `DATABASE_PATH` to its mounted path, such as `/data/app.sqlite`.
+
+Set these backend production variables:
+
+```env
+PORT=3001
+FRONTEND_ORIGIN=https://your-site.netlify.app
+APP_URL=https://your-site.netlify.app
+DATABASE_PATH=/data/app.sqlite
+COOKIE_SAMESITE=None
+COOKIE_SECURE=true
+```
+
+Then set Netlify's `BUN_PUBLIC_API_URL` to the public backend URL and deploy the frontend. The Netlify site will be public at the generated `https://your-site.netlify.app` address. Replace the placeholder live-demo URL at the top of this README with that address after deployment.
 
 ## GitHub
 

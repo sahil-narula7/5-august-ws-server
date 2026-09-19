@@ -3,6 +3,9 @@
   command = "bun run build"
   publish = "dist"
 
+[build.environment]
+  BUN_VERSION = "1.3.11"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

@@ -36,7 +36,9 @@ function adminAccess(userId: string, organizationId: string) {
   return db.query("SELECT * FROM memberships WHERE user_id = ? AND organization_id = ? AND role = 'admin'").get(userId, organizationId) as Membership | null;
 }
 function sessionCookie(token: string, expires: Date) {
-  return `session=${token}; HttpOnly; SameSite=Lax; Path=/; Expires=${expires.toUTCString()}`;
+  const sameSite = process.env.COOKIE_SAMESITE?.trim() || (process.env.NODE_ENV === "production" ? "None" : "Lax");
+  const secure = process.env.COOKIE_SECURE === "true" || (process.env.NODE_ENV === "production" && sameSite === "None");
+  return `session=${token}; HttpOnly; SameSite=${sameSite};${secure ? " Secure;" : ""} Path=/; Expires=${expires.toUTCString()}`;
 }
 function invitationUrl(token: string) {
   return `${process.env.APP_URL ?? "http://localhost:3000"}/?invite=${encodeURIComponent(token)}`;
