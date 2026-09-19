@@ -131,7 +131,7 @@ async function createBoard(request: Request, user: User) {
   if (!data) return error("Invalid JSON");
   try {
     const organizationId = text(data.organizationId, "organizationId");
-    if (!membership(user.id, organizationId)) return error("Organization membership required", 403);
+    if (!adminAccess(user.id, organizationId)) return error("Organization admin access required", 403);
     const boardId = randomUUID();
     db.query("INSERT INTO boards (id, title, organization_id) VALUES (?, ?, ?)").run(boardId, text(data.title, "title"), organizationId);
     return json(db.query("SELECT * FROM boards WHERE id = ?").get(boardId), 201);
@@ -199,6 +199,23 @@ const server = Bun.serve({
           }
           db.query("DELETE FROM memberships WHERE user_id = ? AND organization_id = ?").run(memberId, organizationId);
           return json({ deleted: true });
+        }
+        if (request.method === "PUT" && url.pathname === "/membership") {
+          const data = await body(request);
+          if (!data) return error("Invalid JSON");
+          const organizationId = text(data.organizationId, "organizationId");
+          const memberId = text(data.userId, "userId");
+          const role = data.role === "admin" || data.role === "member" ? data.role : "";
+          if (!role) return error("role must be admin or member");
+          if (!adminAccess(user.id, organizationId)) return error("Organization admin access required", 403);
+          const target = membership(memberId, organizationId);
+          if (!target) return error("Organization member not found", 404);
+          if (target.role === "admin" && role === "member") {
+            const adminCount = db.query("SELECT COUNT(*) as count FROM memberships WHERE organization_id = ? AND role = 'admin'").get(organizationId) as { count: number };
+            if (adminCount.count <= 1) return error("The organization must keep at least one admin", 409);
+          }
+          db.query("UPDATE memberships SET role = ? WHERE user_id = ? AND organization_id = ?").run(role, memberId, organizationId);
+          return json({ updated: true });
         }
         if (request.method === "GET" && url.pathname === "/memberships") {
           const organizationId = url.searchParams.get("organizationId");

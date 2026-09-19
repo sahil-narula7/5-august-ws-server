@@ -156,5 +156,24 @@ test("lets an admin grant board access to an existing account", async () => {
   expect((await organizations.json()).some((organization: { id: string }) => organization.id === organizationId)).toBe(true);
   const boards = await fetch(`${base}/boards`, { headers: { cookie: accountCookie } });
   expect((await boards.json()).some((board: { id: string }) => board.id === boardId)).toBe(true);
+
+  const memberBoard = await fetch(`${base}/board`, {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: accountCookie },
+    body: JSON.stringify({ organizationId, title: "Member board" }),
+  });
+  expect(memberBoard.status).toBe(403);
+
+  const promote = await api("/membership", {
+    method: "PUT",
+    body: JSON.stringify({ organizationId, userId: (await signup.clone().json()).user.id, role: "admin" }),
+  });
+  expect(promote.status).toBe(200);
+  const promotedBoard = await fetch(`${base}/board`, {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: accountCookie },
+    body: JSON.stringify({ organizationId, title: "Admin board" }),
+  });
+  expect(promotedBoard.status).toBe(201);
   cookie = adminCookie;
 });

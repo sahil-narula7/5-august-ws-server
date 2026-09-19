@@ -404,6 +404,20 @@ export function App() {
     }
   }
 
+  async function updateMemberRole(memberId: string, role: "admin" | "member") {
+    try {
+      await request("/membership", {
+        method: "PUT",
+        body: JSON.stringify({ organizationId, userId: memberId, role }),
+      });
+      await loadMembers();
+      await loadWorkspace();
+      setNotice(role === "admin" ? "Member promoted to admin" : "Admin changed to normal member");
+    } catch (cause) {
+      showError(cause);
+    }
+  }
+
   async function deleteOrganization() {
     if (!organizationId || !window.confirm("Delete this organization, its boards, and all issues?")) return;
     try {
@@ -516,6 +530,7 @@ export function App() {
           boards={visibleBoards}
           onInvite={inviteMember}
           onRemove={removeMember}
+          onRoleChange={updateMemberRole}
           onGrant={updateBoardAccess}
           onRevoke={revokeBoardAccess}
           onDeleteOrganization={() => void deleteOrganization()}
@@ -533,10 +548,12 @@ export function App() {
           </form>
         )}
 
-        <form className="new-column-form board-form" onSubmit={createBoard}>
-          <input name="title" placeholder="New board title" required />
-          <button type="submit">Create board</button>
-        </form>
+        {currentOrganization?.role === "admin" && (
+          <form className="new-column-form board-form" onSubmit={createBoard}>
+            <input name="title" placeholder="New board title" required />
+            <button type="submit">Create board</button>
+          </form>
+        )}
 
         {boardId && (
           <form className="new-column-form section-form" onSubmit={createSection}>
@@ -545,7 +562,7 @@ export function App() {
           </form>
         )}
 
-        {boardId && <button className="danger-button" type="button" onClick={() => void deleteBoard()}>Delete board</button>}
+        {boardId && currentOrganization?.role === "admin" && <button className="danger-button" type="button" onClick={() => void deleteBoard()}>Delete board</button>}
 
         <div className="board-grid">
           {sections.map(section => (
@@ -628,6 +645,7 @@ function SettingsPanel({
   boards,
   onInvite,
   onRemove,
+  onRoleChange,
   onGrant,
   onRevoke,
   onDeleteOrganization,
@@ -638,6 +656,7 @@ function SettingsPanel({
   boards: Board[];
   onInvite: (event: FormEvent<HTMLFormElement>) => void;
   onRemove: (memberId: string) => void;
+  onRoleChange: (memberId: string, role: "admin" | "member") => void;
   onGrant: (event: FormEvent<HTMLFormElement>) => void;
   onRevoke: (boardId: string, userId: string) => void;
   onDeleteOrganization: () => void;
@@ -703,7 +722,16 @@ function SettingsPanel({
           <div className="member-row" key={member.user_id}>
             <div>
               <strong>{member.email}</strong>
-              <small>{member.role}</small>
+              <select
+                className="member-role-select"
+                value={member.role}
+                disabled={member.role === "admin" && members.filter(item => item.role === "admin").length === 1}
+                onChange={event => onRoleChange(member.user_id, event.target.value as "admin" | "member")}
+                aria-label={`Role for ${member.email}`}
+              >
+                <option value="member">Normal member</option>
+                <option value="admin">Admin</option>
+              </select>
             </div>
             {member.role !== "admin" && (
               <button className="danger-button" type="button" onClick={() => onRemove(member.user_id)}>Remove from organization</button>
