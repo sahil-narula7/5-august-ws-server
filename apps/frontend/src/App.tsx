@@ -51,6 +51,8 @@ export function App() {
   const [notice, setNotice] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [organizationFormOpen, setOrganizationFormOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"signin" | "forgot" | "reset">(() => new URLSearchParams(window.location.search).has("reset") ? "reset" : "signin");
+  const [resetToken] = useState(() => new URLSearchParams(window.location.search).get("reset") ?? "");
   const [inviteToken, setInviteToken] = useState(() => {
     const urlToken = new URLSearchParams(window.location.search).get("invite");
     if (urlToken) window.localStorage.setItem(INVITE_STORAGE_KEY, urlToken);
@@ -188,6 +190,41 @@ export function App() {
       } else {
         showError(cause);
       }
+    }
+  }
+
+  async function requestPasswordReset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    clearMessages();
+    const form = new FormData(event.currentTarget);
+    try {
+      const data = await request<{ message: string; resetUrl?: string }>("/password-reset/request", {
+        method: "POST",
+        body: JSON.stringify({ email: form.get("email") }),
+      });
+      setNotice(data.resetUrl ? `Reset link: ${data.resetUrl}` : data.message);
+    } catch (cause) {
+      showError(cause);
+    }
+  }
+
+  async function resetPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    clearMessages();
+    const form = new FormData(event.currentTarget);
+    try {
+      const password = form.get("password");
+      const confirmation = form.get("confirmation");
+      if (password !== confirmation) throw new Error("Passwords do not match");
+      await request("/password-reset/confirm", {
+        method: "POST",
+        body: JSON.stringify({ token: resetToken, password }),
+      });
+      setAuthMode("signin");
+      setNotice("Password updated. You can now sign in.");
+      window.history.replaceState({}, "", window.location.pathname);
+    } catch (cause) {
+      showError(cause);
     }
   }
 
@@ -478,9 +515,19 @@ export function App() {
       <main className="board-shell">
         <section className="auth-panel">
           <p className="eyebrow">Project workspace</p>
-          <h1>{inviteToken ? "Join your workspace" : "Sign in to your board"}</h1>
-          {inviteToken && <p className="notice-message">Create an account or sign in with the invited email to join this organization.</p>}
-          <form onSubmit={authenticate}>
+          <h1>{authMode === "forgot" ? "Reset your password" : authMode === "reset" ? "Choose a new password" : inviteToken ? "Join your workspace" : "Sign in to your board"}</h1>
+          {inviteToken && authMode === "signin" && <p className="notice-message">Create an account or sign in with the invited email to join this organization.</p>}
+          {authMode === "forgot" && <form onSubmit={requestPasswordReset}>
+            <input name="email" type="email" placeholder="Email" required />
+            <button type="submit">Send reset link</button>
+            <button type="button" onClick={() => { clearMessages(); setAuthMode("signin"); }}>Back to sign in</button>
+          </form>}
+          {authMode === "reset" && <form onSubmit={resetPassword}>
+            <input name="password" type="password" placeholder="New password" minLength={8} required />
+            <input name="confirmation" type="password" placeholder="Confirm new password" minLength={8} required />
+            <button type="submit">Update password</button>
+          </form>}
+          {authMode === "signin" && <form onSubmit={authenticate}>
             <input name="email" type="email" placeholder="Email" required />
             <input name="password" type="password" placeholder="Password" minLength={8} required />
             <select name="mode">
@@ -488,8 +535,10 @@ export function App() {
               <option value="signup">Create account</option>
             </select>
             <button type="submit">Continue</button>
-          </form>
+            <button type="button" onClick={() => { clearMessages(); setAuthMode("forgot"); }}>Forgot password?</button>
+          </form>}
           <Message error={error} />
+          <Message notice={notice} />
         </section>
       </main>
     );

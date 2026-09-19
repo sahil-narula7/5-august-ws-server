@@ -99,6 +99,11 @@ db.run(`
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     expires_at TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS password_resets (
+    token TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TEXT NOT NULL
+  );
   CREATE INDEX IF NOT EXISTS memberships_org_idx ON memberships(organization_id);
   CREATE INDEX IF NOT EXISTS boards_org_idx ON boards(organization_id);
   CREATE INDEX IF NOT EXISTS board_memberships_user_idx ON board_memberships(user_id);

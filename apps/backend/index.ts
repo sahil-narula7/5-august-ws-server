@@ -46,6 +46,9 @@ function sessionCookie(token: string, expires: Date) {
 function invitationUrl(token: string) {
   return `${process.env.APP_URL ?? "http://localhost:3000"}/?invite=${encodeURIComponent(token)}`;
 }
+function passwordResetUrl(token: string) {
+  return `${process.env.APP_URL ?? "http://localhost:3000"}/?reset=${encodeURIComponent(token)}`;
+}
 async function sendInvitationEmail(email: string, organizationName: string, url: string) {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const from = process.env.EMAIL_FROM?.trim();
@@ -74,6 +77,28 @@ async function sendInvitationEmail(email: string, organizationName: string, url:
     } catch { /* Keep the stable provider error when the response is not JSON. */ }
     throw new Error(message);
   }
+  return true;
+}
+async function sendPasswordResetEmail(email: string, url: string) {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const from = process.env.EMAIL_FROM?.trim();
+  if (!apiKey || !from) return false;
+  let response: Response;
+  try {
+    response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        from,
+        to: [email],
+        subject: "Reset your Worknest password",
+        html: `<p>We received a request to change your Worknest password.</p><p><a href="${url}">Choose a new password</a></p><p>This link expires in 1 hour.</p>`,
+      }),
+    });
+  } catch {
+    throw new Error("Unable to reach Resend. Check your internet connection and Resend configuration.");
+  }
+  if (!response.ok) throw new Error(`Email provider rejected the password reset (${response.status})`);
   return true;
 }
 function notifyAdminsForNewAccount(email: string) {
@@ -106,6 +131,40 @@ async function signin(request: Request) {
   const record = db.query("SELECT * FROM users WHERE email = ?").get(email) as { id: string; email: string; password_hash: string } | null;
   if (!record || !(await Bun.password.verify(password, record.password_hash))) return error("Invalid credentials", 401);
   return signinUser({ id: record.id, email: record.email });
+}
+async function requestPasswordReset(request: Request) {
+  const data = await body(request);
+  if (!data) return error("Invalid JSON");
+  const email = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
+  const user = db.query("SELECT id, email FROM users WHERE email = ?").get(email) as User | null;
+  let resetUrl: string | undefined;
+  let emailSent = false;
+  if (user) {
+    const token = randomUUID();
+    resetUrl = passwordResetUrl(token);
+    db.query("DELETE FROM password_resets WHERE user_id = ?").run(user.id);
+    db.query("INSERT INTO password_resets (token, user_id, expires_at) VALUES (?, ?, datetime('now', '+1 hour'))").run(token, user.id);
+    try { emailSent = await sendPasswordResetEmail(user.email, resetUrl); }
+    catch (cause) { return error(cause instanceof Error ? cause.message : "Unable to send password reset email", 502); }
+  }
+  return json({ message: "If an account exists for that email, password reset instructions have been sent.", emailSent, ...(emailSent ? {} : { resetUrl }) });
+}
+async function resetPassword(request: Request) {
+  const data = await body(request);
+  if (!data) return error("Invalid JSON");
+  try {
+    const token = text(data.token, "token");
+    const password = text(data.password, "password");
+    if (password.length < 8) return error("password must be at least 8 characters");
+    const reset = db.query("SELECT user_id FROM password_resets WHERE token = ? AND expires_at > datetime('now')").get(token) as { user_id: string } | null;
+    if (!reset) return error("This password reset link is invalid or expired", 400);
+    db.transaction(() => {
+      db.query("UPDATE users SET password_hash = ? WHERE id = ?").run(Bun.password.hashSync(password), reset.user_id);
+      db.query("DELETE FROM password_resets WHERE token = ?").run(token);
+      db.query("DELETE FROM sessions WHERE user_id = ?").run(reset.user_id);
+    })();
+    return json({ message: "Password updated. You can now sign in." });
+  } catch (cause) { return error(cause instanceof Error ? cause.message : "Unable to reset password"); }
 }
 function signinUser(user: User) {
   const token = randomUUID();
@@ -171,6 +230,8 @@ const server = Bun.serve({
     try {
       if (request.method === "POST" && url.pathname === "/signup") return signup(request);
       if (request.method === "POST" && url.pathname === "/signin") return signin(request);
+      if (request.method === "POST" && url.pathname === "/password-reset/request") return requestPasswordReset(request);
+      if (request.method === "POST" && url.pathname === "/password-reset/confirm") return resetPassword(request);
       if (request.method === "GET" && url.pathname === "/health") return json({ ok: true });
       if (request.method === "GET" && url.pathname === "/me") return user ? json({ user }) : error("Authentication required", 401);
       if (request.method === "GET" && url.pathname === "/notifications") return json(db.query("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC").all(user?.id ?? ""));
