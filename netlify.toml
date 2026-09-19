@@ -1,7 +1,6 @@
 [build]
-  base = "apps/frontend"
-  command = "bun run build"
-  publish = "dist"
+  command = "bun install --frozen-lockfile && bun --cwd apps/frontend run build"
+  publish = "apps/frontend/dist"
 
 [build.environment]
   BUN_VERSION = "1.3.11"
