@@ -1,5 +1,5 @@
 [build]
-  command = "bun install --frozen-lockfile && bun --cwd apps/frontend run build"
+  command = "bun install --frozen-lockfile && cd apps/frontend && bun run build"
   publish = "apps/frontend/dist"
 
 [build.environment]

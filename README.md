@@ -75,7 +75,7 @@ This repository includes [netlify.toml](netlify.toml). In Netlify choose **Add n
 Netlify will read the configuration automatically. The important settings are:
 
 - Base directory: leave empty (repository root)
-- Build command: `bun install --frozen-lockfile && bun --cwd apps/frontend run build`
+- Build command: `bun install --frozen-lockfile && cd apps/frontend && bun run build`
 - Publish directory: `apps/frontend/dist`
 
 Add this environment variable in Netlify:
