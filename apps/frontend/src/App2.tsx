@@ -1,75 +1,74 @@
-import axios from "axios";
 import "./index.css";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 
-const BACKEND_ENDPOINT = "http://localhost:3001"
+type Section = "todo" | "in_progress" | "done";
+
+type Issue = {
+  id: string;
+  title: string;
+  section: Section;
+};
+
+const initialIssues: Issue[] = [
+  { id: "1", title: "Fix background color", section: "todo" },
+  { id: "2", title: "Ship the dashboard", section: "done" },
+];
 
 export function App() {
-  const [issues, setIssues] = useState([])
+  const [issues, setIssues] = useState<Issue[]>(initialIssues);
+  const todoInputRef = useRef<HTMLInputElement | null>(null);
+  const inProgressInputRef = useRef<HTMLInputElement | null>(null);
+  const doneInputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    setInterval(() => {
-      axios.get(`${BACKEND_ENDPOINT}/issues`)
-      .then(response => {
-        setIssues(response.data.issues)
-      })  
-    }, 2000);
+  function addIssue(section: Section, inputRef: React.RefObject<HTMLInputElement | null>) {
+    const value = inputRef.current?.value.trim();
+    if (!value) return;
 
-    axios.get(`${BACKEND_ENDPOINT}/issues`)
-      .then(response => {
-        setIssues(response.data.issues)
-      })
+    setIssues(current => [
+      ...current,
+      { id: crypto.randomUUID(), title: value, section },
+    ]);
+    inputRef.current!.value = "";
+  }
 
-      
-
-  }, [])
-  
   return (
-    <div style={{display: "flex", }}>
-      <div style={{flex: 1}}>
-        Todo
-        <input id="todo_input" type="text" placeholder="issue title" />
-        <button onClick={() => {
-          axios.post(`${BACKEND_ENDPOINT}/issue`, {
-            title: document.getElementById("todo_input").value,
-            section: "todo"
-          })
-        }}>Add issue</button>
-        {issues.filter(i => i.section == "todo").map(issue => <Card title={issue.title} />)}
+    <div style={{ display: "flex" }}>
+      <div style={{ flex: 1 }}>
+        <h3>Todo</h3>
+        <input ref={todoInputRef} type="text" placeholder="issue title" />
+        <button type="button" onClick={() => addIssue("todo", todoInputRef)}>Add issue</button>
+        {issues.filter(issue => issue.section === "todo").map(issue => (
+          <Card key={issue.id} title={issue.title} />
+        ))}
       </div>
 
-      <div style={{flex: 1}}>
-        In progress
-        <input id="inprogress_input" type="text" placeholder="issue title" />
-        <button onClick={() => {
-          axios.post(`${BACKEND_ENDPOINT}/issue`, {
-            title: document.getElementById("inprogress_input").value,
-            section: "in_progress"
-          })
-        }}>Add issue</button>
-        {issues.filter(i => i.section == "in_progress").map(issue => <Card title={issue.title} />)}
+      <div style={{ flex: 1 }}>
+        <h3>In progress</h3>
+        <input ref={inProgressInputRef} type="text" placeholder="issue title" />
+        <button type="button" onClick={() => addIssue("in_progress", inProgressInputRef)}>Add issue</button>
+        {issues.filter(issue => issue.section === "in_progress").map(issue => (
+          <Card key={issue.id} title={issue.title} />
+        ))}
       </div>
 
-
-      <div style={{flex: 1}}>
-        Done
-        <input id="done_input" type="text" placeholder="issue title" />
-        <button onClick={() => {
-          axios.post(`${BACKEND_ENDPOINT}/issue`, {
-            title: document.getElementById("done_input").value,
-            section: "done"
-          })
-        }}>Add issue</button>
-        {issues.filter(i => i.section == "done").map(issue => <Card title={issue.title} />)}
+      <div style={{ flex: 1 }}>
+        <h3>Done</h3>
+        <input ref={doneInputRef} type="text" placeholder="issue title" />
+        <button type="button" onClick={() => addIssue("done", doneInputRef)}>Add issue</button>
+        {issues.filter(issue => issue.section === "done").map(issue => (
+          <Card key={issue.id} title={issue.title} />
+        ))}
       </div>
     </div>
   );
 }
 
-function Card({title}) {
-  return <div style={{border: "1px solid black", padding: 20, margin: 20}}>
-    {title}
-  </div>
+function Card({ title }: { title: string }) {
+  return (
+    <div style={{ border: "1px solid black", padding: 20, margin: 20 }}>
+      {title}
+    </div>
+  );
 }
 
 export default App;

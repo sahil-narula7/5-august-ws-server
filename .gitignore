@@ -7,6 +7,7 @@ node_modules
 
 # Local env files
 .env
+.env.example.local
 .env.local
 .env.development.local
 .env.test.local
@@ -26,6 +27,9 @@ coverage
 out/
 build
 dist
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
 
 
 # Debug

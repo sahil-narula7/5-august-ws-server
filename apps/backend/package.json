@@ -3,6 +3,12 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "dev": "bun --watch index.ts",
+    "build": "bun build index.ts --outdir dist",
+    "check-types": "tsc --noEmit",
+    "test": "bun test"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },

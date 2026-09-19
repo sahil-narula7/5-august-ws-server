@@ -157,3 +157,12 @@ Learn more about the power of Turborepo:
 - [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
 - [Configuration Options](https://turborepo.dev/docs/reference/configuration)
 - [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+
+## Make the project yours
+
+1. Copy `.env.example` to `.env` if you need to change the default ports or database path.
+2. Run `bun run dev` from the repository root.
+3. Open the frontend at `http://localhost:3000`.
+4. Select **Create account**, enter your email and password, then create your organization.
+
+The first account is stored in SQLite and receives the initial `admin` membership. Do not put your password or account details in source files. The local database is `app.sqlite` by default and should remain uncommitted.

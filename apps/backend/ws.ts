@@ -1,4 +1,4 @@
-import { WebSocketServer } from "ws";
+import { WebSocketServer, type WebSocket } from "ws";
 
 interface Issue {id: number, title: string, section: string}
 let ISSUES: Issue[] = [{
@@ -13,7 +13,7 @@ let ISSUES: Issue[] = [{
 
 
 const wss = new WebSocketServer({port: 3005}); // const app = express(), app.listen(3000);
-const connections = [];
+const connections: WebSocket[] = [];
 
 wss.on("connection", (socket) => {
     connections.push(socket);
@@ -47,6 +47,19 @@ wss.on("connection", (socket) => {
                 type: "delete_issue",
                 issueId: parsedData.issueId
             })))
+        }
+
+        if (parsedData.type == "move_issue") {
+            const issue = ISSUES.find(x => x.id == parsedData.issueId)
+
+            if (issue && ["todo", "in_progress", "done"].includes(parsedData.newSection)) {
+                issue.section = parsedData.newSection
+                connections.forEach(s => s.send(JSON.stringify({
+                    type: "issue_moved",
+                    issueId: issue.id,
+                    section: issue.section
+                })))
+            }
         }
         
     })
