@@ -91,33 +91,3 @@ The backend is a Bun server and cannot run as the frontend's static Netlify publ
 ## GitHub
 
 Repository: https://github.com/sahil-narula7/Worknest-collaborative-workspace
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-bun exec turbo link
-bun exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
-
-## Make the project yours
-
-1. Copy `.env.example` to `.env` if you need to change the default ports or database path.
-2. Run `bun run dev` from the repository root.
-3. Open the frontend at `http://localhost:3000`.
-4. Select **Create account**, enter your email and password, then create your organization.
-
-The first account is stored in SQLite and receives the initial `admin` membership. Do not put your password or account details in source files. The local database is `app.sqlite` by default and should remain uncommitted.
