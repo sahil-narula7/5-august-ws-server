@@ -3,7 +3,8 @@ import { db } from "./db";
 
 const port = Number(process.env.PORT ?? 3001);
 const sessionDays = 30;
-const jsonHeaders = { "content-type": "application/json", "access-control-allow-credentials": "true", "access-control-allow-origin": process.env.FRONTEND_ORIGIN ?? "http://localhost:3000" };
+const frontendOrigin = (process.env.FRONTEND_ORIGIN ?? "http://localhost:3000").trim().replace(/\/+$/, "");
+const jsonHeaders = { "content-type": "application/json", "access-control-allow-credentials": "true", "access-control-allow-origin": frontendOrigin };
 type User = { id: string; email: string };
 type Membership = { id: string; user_id: string; organization_id: string; role: "admin" | "member" };
 
