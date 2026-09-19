@@ -34,6 +34,7 @@ async function request<T>(path: string, options: RequestInit = {}) {
 
 export function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [organizationId, setOrganizationId] = useState("");
   const [boards, setBoards] = useState<Board[]>([]);
@@ -114,7 +115,14 @@ export function App() {
       setUser(data.user);
       await Promise.all([loadWorkspace(), loadUsers(), loadNotifications()]);
     }).catch(cause => {
-      if (!(cause instanceof Error && cause.message === "Authentication required")) showError(cause);
+      if (cause instanceof Error && cause.message === "Authentication required") {
+        window.localStorage.removeItem(AUTH_STORAGE_KEY);
+      } else {
+        showError(cause);
+      }
+      setAuthReady(true);
+    }).finally(() => {
+      setAuthReady(true);
     });
   }, []);
 
@@ -164,7 +172,11 @@ export function App() {
       setUser(data.user);
       await loadWorkspace();
     } catch (cause) {
-      showError(cause);
+      if (cause instanceof Error && cause.message === "email is already registered") {
+        setError("This email already has an account. Choose Sign in instead of Create account.");
+      } else {
+        showError(cause);
+      }
     }
   }
 
@@ -429,6 +441,10 @@ export function App() {
     } catch (cause) {
       showError(cause);
     }
+  }
+
+  if (!authReady) {
+    return <main className="board-shell"><section className="auth-panel"><p className="eyebrow">Worknest</p><h1>Loading your workspace...</h1></section></main>;
   }
 
   if (!user) {
