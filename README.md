@@ -36,8 +36,8 @@ packages/       Shared Turborepo TypeScript and ESLint configuration
 ## Local setup
 
 ```bash
-git clone https://github.com/sahil-narula7/5-august-ws-server.git
-cd 5-august-ws-server
+git clone https://github.com/sahil-narula7/Worknest-collaborative-workspace.git
+cd Worknest-collaborative-workspace
 bun install
 cp .env.example apps/backend/.env
 bun run dev
@@ -72,7 +72,7 @@ bun test apps/backend/index.test.ts
 
 This repository includes [netlify.toml](netlify.toml). In Netlify choose **Add new project > Import an existing project > GitHub**, then select:
 
-`sahil-narula7/5-august-ws-server`
+`sahil-narula7/Worknest-collaborative-workspace`
 
 Netlify will read the configuration automatically. The important settings are:
 
@@ -90,7 +90,7 @@ The backend is a Bun server and cannot run as the frontend's static Netlify publ
 
 ## GitHub
 
-Repository: https://github.com/sahil-narula7/5-august-ws-server
+Repository: https://github.com/sahil-narula7/Worknest-collaborative-workspace
 turbo link
 ```
 
