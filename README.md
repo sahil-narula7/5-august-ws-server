@@ -2,7 +2,7 @@
 
 A Trello-style collaborative workspace built with React, Bun, SQLite, and Turborepo. Users can create organizations and boards, manage sections and issues, comment in real time through polling, assign work, invite members, and grant board-specific access.
 
-**Live demo:** [Open the app](https://your-app-name.netlify.app)
+**Live demo:** [Open the app](https://worknest-07.netlify.app/)
 
 ## Features
 
